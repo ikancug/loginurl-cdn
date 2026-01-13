@@ -3,15 +3,9 @@ const express = require('express');
 
 module.exports = (app) => {
 
-    // ===============================
-    // BODY PARSER (FIX iOS)
-    // ===============================
+    // ✅ HANYA urlencoded (AMAN)
     app.use(express.urlencoded({ extended: false }));
-    app.use(express.text({ type: '*/*' })); // 🔥 FIX iOS Growtopia
 
-    // ===============================
-    // GLOBAL MIDDLEWARE
-    // ===============================
     app.use((req, res, next) => {
         res.header('Access-Control-Allow-Origin', '*');
         res.header(
@@ -21,8 +15,5 @@ module.exports = (app) => {
         next();
     });
 
-    // ===============================
-    // STATIC FILES
-    // ===============================
     app.use(express.static(path.join(__dirname, '..', 'public')));
 };
