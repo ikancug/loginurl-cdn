@@ -31,7 +31,7 @@ module.exports = (app) => {
     /* =========================
        2️⃣ LOGIN VALIDATE
     ========================= */
-    app.post('/player/growid/login/validate', (req, res) => {
+    app.all('/player/growid/login/validate', (req, res) => {
 
     const _token = req.body._token || '';
     const growId = req.body.growId || '';
