@@ -4,7 +4,7 @@ const cnf = require(path.join(__dirname, '..', 'Config.js'));
 module.exports = (app) => {
 
     app.all('/player/login/dashboard', (req, res) => {
-        res.render('growtopia/DashboardView');
+        res.render('growtopia/DashboardView', { cnf });
     });
 
     app.all('/player/growid/login/validate', (req, res) => {
@@ -12,37 +12,20 @@ module.exports = (app) => {
         res.send(`{"status":"success","message":"Account Validated.","token":"${data}","url":"","accountType":"growtopia"}`);
     });
 
-    // 🔥 checktoken HARUS all (GET + POST)
+    // 🔥 FIX UTAMA: TIDAK REDIRECT
     app.all('/player/growid/checktoken', (req, res) => {
-        res.redirect(307, '/player/growid/validate/checktoken');
-    });
 
-    // 🔥 FINAL VALIDATE (IOS SAFE)
-    app.all('/player/growid/validate/checktoken', (req, res) => {
-
-        // ambil dari body ATAU query (IOS)
         let refreshToken =
             req.body?.refreshToken ||
             req.query?.refreshToken ||
             '';
 
-        let clientData =
-            req.body?.clientData ||
-            req.query?.clientData ||
-            '';
-
-        if (!refreshToken) {
-            return res.send(`{"status":"success","message":"Token is valid.","token":"","url":"","accountType":"growtopia"}`);
-        }
-
-        // 🔥 FIX BASE64 IOS
-        refreshToken = refreshToken
+        // FIX BASE64 IOS
+        refreshToken = (refreshToken || '')
             .replace(/ /g, '+')
             .replace(/\n/g, '');
 
-        // ❌ JANGAN DECODE / VALIDATE
-        // ✔ LANGSUNG BALIK
-
+        // ✔ Growtopia TIDAK peduli isi token
         res.send(`{
             "status":"success",
             "message":"Token is valid.",
@@ -51,4 +34,5 @@ module.exports = (app) => {
             "accountType":"growtopia"
         }`);
     });
+
 };
