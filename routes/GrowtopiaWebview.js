@@ -1,107 +1,81 @@
-// importing the necessary modules
-const { url } = require('inspector');
 const path = require('path');
 const cnf = require(path.join(__dirname, '..', 'Config.js'));
-const querystring = require('querystring');
 
-function set(key, newValue, token) {
-    try {
-        // Pisahkan token berdasarkan pemisah '\\n' untuk mendapatkan data yang lebih akurat
-        let dataa = token.split("\\n");
-
-        // Iterasi untuk mencari key yang cocok dan mengganti nilainya
-        for (let i = 0; i < dataa.length; i++) {
-            if (dataa[i].includes(key)) {
-                let tempData = dataa[i].split("|");
-                if (tempData[0] === key) {
-                    tempData[1] = newValue;
-                    dataa[i] = tempData.join("|");
-                }
-            }
-        }
-        return dataa.join("\\n");
-    } catch (error) {
-        console.error("Error in set:", error);
-        return token; // Kembalikan token asli jika terjadi kesalahan
-    }
-}
-function get(key, token) {
-    try {
-        const data = (token.replace(/\n/g, "|")).split("|");
-        for (let index = 0; index < data.length; index++) {
-            if (data[index] == key) return data[index + 1];
-        }
-        return ""; // Kembali kosong jika kunci tidak ditemukan
-    } catch (error) {
-        return ""; // Kembali kosong jika terjadi kesalahan
-    }
-}
-function get2(key, token) {
-    try {
-        const data = (token.replace(/\\n/g, "|")).split("|");
-        for (let index = 0; index < data.length; index++) {
-            if (data[index] == key) return data[index + 1];
-        }
-        return ""; // Kembali kosong jika kunci tidak ditemukan
-    } catch (error) {
-        return ""; // Kembali kosong jika terjadi kesalahan
-    }
+// ===============================
+// RAW BODY PARSER (iOS)
+// ===============================
+function parseRaw(body) {
+    if (!body || typeof body !== 'string') return {};
+    return body.split('&').reduce((acc, pair) => {
+        const [k, v] = pair.split('=');
+        if (k) acc[k] = decodeURIComponent(v || '');
+        return acc;
+    }, {});
 }
 
-/**
- * Memparsing query string menjadi objek key-value.
- * @param {string} queryString - Query string (misalnya, username=&pass=).
- * @returns {Object} - Objek key-value hasil parsing.
- */
-function parseQuery(queryString) {
-    if (!queryString || typeof queryString !== 'string') {
-        return {};
-    }
-
-    return queryString
-        .split('&') // Pisahkan setiap pasangan key=value
-        .reduce((acc, pair) => {
-            const [key, value] = pair.split('=');
-            if (key) {
-                acc[key] = value ? decodeURIComponent(value) : ''; // Decode dan handle value kosong
-            }
-            return acc;
-        }, {});
-}
-
-// exporting the route function
 module.exports = (app) => {
-    app.all('/player/login/dashboard', function (req, res) {
-        return res.render('growtopia/DashboardView', { cnf: cnf });
+
+    // ===============================
+    // DASHBOARD
+    // ===============================
+    app.all('/player/login/dashboard', (req, res) => {
+        res.render('growtopia/DashboardView', { cnf });
     });
 
+    // ===============================
+    // LOGIN VALIDATE (DUMMY)
+    // ===============================
     app.all('/player/growid/login/validate', (req, res) => {
-        let data = decodeURIComponent(req.query.data);
-        
-        res.send(`{"status":"success","message":"Account Validated.","token":"${data}","url":"","accountType":"growtopia"}`,);
+        const data = decodeURIComponent(req.query.data || '');
+        res.send(`{"status":"success","message":"Account Validated.","token":"${data}","url":"","accountType":"growtopia"}`);
     });
 
+    // ===============================
+    // CHECK TOKEN (NO REDIRECT, FIX iOS)
+    // ===============================
     app.all('/player/growid/checktoken', (req, res) => {
-    res.redirect(307, '/player/growid/validate/checktoken');
-});
+
+        const body = typeof req.body === 'string'
+            ? parseRaw(req.body)
+            : req.body;
+
+        const refreshToken = body.refreshToken;
+        const clientData   = body.clientData;
+
+        if (!refreshToken || !clientData) {
+            return res.send(`{"status":"failed","message":"Invalid token.","token":"","url":"","accountType":"growtopia"}`);
+        }
+
+        let decoded;
+        try {
+            decoded = Buffer.from(refreshToken, 'base64').toString();
+        } catch {
+            return res.send(`{"status":"failed","message":"Bad token.","token":"","url":"","accountType":"growtopia"}`);
+        }
+
+        const newToken = Buffer.from(decoded).toString('base64');
+
+        res.send(`{"status":"success","message":"Token is valid.","token":"${newToken}","url":"","accountType":"growtopia"}`);
+    });
+
+    // ===============================
+    // VALIDATE CHECK TOKEN (FALLBACK)
+    // ===============================
     app.all('/player/growid/validate/checktoken', (req, res) => {
-    const refreshToken = req.body.refreshToken;
-    const clientData = req.body.clientData;
 
-    if (!refreshToken || !clientData) {
-        return res.send(`{"status":"failed","message":"Invalid token.","token":"","url":"","accountType":"growtopia"}`);
-    }
+        const body = typeof req.body === 'string'
+            ? parseRaw(req.body)
+            : req.body;
 
-    // decode (dummy, sesuai penjelasan kamu)
-    const decoded = Buffer.from(refreshToken, 'base64').toString();
+        const refreshToken = body.refreshToken;
 
-    if (!decoded.includes("growId=")) {
-        return res.send(`{"status":"failed","message":"Token invalid.","token":"","url":"","accountType":"growtopia"}`);
-    }
+        if (!refreshToken) {
+            return res.send(`{"status":"failed","message":"Invalid token.","token":"","url":"","accountType":"growtopia"}`);
+        }
 
-    // refresh token
-    const newToken = Buffer.from(decoded).toString('base64');
+        const decoded = Buffer.from(refreshToken, 'base64').toString();
+        const newToken = Buffer.from(decoded).toString('base64');
 
-    res.send(`{"status":"success","message":"Token is valid.","token":"${newToken}","url":"","accountType":"growtopia"}`);
-});
+        res.send(`{"status":"success","message":"Token is valid.","token":"${newToken}","url":"","accountType":"growtopia"}`);
+    });
 };
