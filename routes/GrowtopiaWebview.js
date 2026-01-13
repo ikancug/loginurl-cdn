@@ -9,16 +9,15 @@ module.exports = (app) => {
     ========================= */
     app.all('/player/login/dashboard', (req, res) => {
 
-    const rawData =
+    // Growtopia kirim client data via query ?data=
+    const rawClientData =
+        req.query.data ||
         req.body?.data ||
-        req.query?.data ||
-        JSON.stringify({
-            platform: "ios",
-            rid: Date.now().toString()
-        });
+        '';
 
+    // JANGAN stringify ulang
     const encodedClientData = Buffer
-        .from(rawData)
+        .from(rawClientData)
         .toString('base64');
 
     res.render('growtopia/DashboardView', {
@@ -26,6 +25,7 @@ module.exports = (app) => {
         _token: encodedClientData
     });
 });
+
 
 
     /* =========================
