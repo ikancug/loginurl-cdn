@@ -82,6 +82,26 @@ module.exports = (app) => {
     });
 
     app.all('/player/growid/checktoken', (req, res) => {
-        res.send(`{"status":"success","message":"Account Validated.","token":"${req.body.refreshToken}","url":"","accountType":"growtopia"}`,);
-    });
+    res.redirect('/player/growid/validate/checktoken');
+});
+    app.all('/player/growid/validate/checktoken', (req, res) => {
+    const refreshToken = req.body.refreshToken;
+    const clientData = req.body.clientData;
+
+    if (!refreshToken || !clientData) {
+        return res.send(`{"status":"failed","message":"Invalid token.","token":"","url":"","accountType":"growtopia"}`);
+    }
+
+    // decode (dummy, sesuai penjelasan kamu)
+    const decoded = Buffer.from(refreshToken, 'base64').toString();
+
+    if (!decoded.includes("growId=")) {
+        return res.send(`{"status":"failed","message":"Token invalid.","token":"","url":"","accountType":"growtopia"}`);
+    }
+
+    // refresh token
+    const newToken = Buffer.from(decoded).toString('base64');
+
+    res.send(`{"status":"success","message":"Token is valid.","token":"${newToken}","url":"","accountType":"growtopia"}`);
+});
 };
