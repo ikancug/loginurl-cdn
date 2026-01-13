@@ -1,24 +1,28 @@
-// importing the necessary modules
 const path = require('path');
 const express = require('express');
 
-// exporting the route
 module.exports = (app) => {
 
-    // 🔥 WAJIB: body parser (Growtopia pakai x-www-form-urlencoded)
+    // ===============================
+    // BODY PARSER (FIX iOS)
+    // ===============================
     app.use(express.urlencoded({ extended: false }));
+    app.use(express.text({ type: '*/*' })); // 🔥 FIX iOS Growtopia
 
-    // middleware global
-    app.use(function (req, res, next) {
+    // ===============================
+    // GLOBAL MIDDLEWARE
+    // ===============================
+    app.use((req, res, next) => {
         res.header('Access-Control-Allow-Origin', '*');
         res.header(
             'Access-Control-Allow-Headers',
-            'Origin, X-Requested-With, Content-Type, Accept',
+            'Origin, X-Requested-With, Content-Type, Accept'
         );
-        console.log(`[${new Date().toLocaleString()}] ${req.method} ${req.url} - ${res.statusCode}`);
         next();
     });
 
-    // static files
+    // ===============================
+    // STATIC FILES
+    // ===============================
     app.use(express.static(path.join(__dirname, '..', 'public')));
 };
