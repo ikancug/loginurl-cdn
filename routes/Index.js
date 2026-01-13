@@ -1,9 +1,14 @@
 // importing the necessary modules
 const path = require('path');
+const express = require('express');
 
 // exporting the route
 module.exports = (app) => {
-    // setting index route
+
+    // 🔥 WAJIB: body parser (Growtopia pakai x-www-form-urlencoded)
+    app.use(express.urlencoded({ extended: false }));
+
+    // middleware global
     app.use(function (req, res, next) {
         res.header('Access-Control-Allow-Origin', '*');
         res.header(
@@ -15,5 +20,5 @@ module.exports = (app) => {
     });
 
     // static files
-    app.use(require('express').static(path.join(__dirname, '..', 'public')));
-}
+    app.use(express.static(path.join(__dirname, '..', 'public')));
+};
