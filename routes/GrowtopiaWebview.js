@@ -31,39 +31,46 @@ module.exports = (app) => {
     /* =========================
        2️⃣ LOGIN VALIDATE
     ========================= */
-    app.all('/player/growid/login/validate', (req, res) => {
+   app.all('/player/growid/login/validate', (req, res) => {
 
-    // iOS: GET ?data=
-    if (req.query?.data) {
-        return res.json({
-            status: "success",
-            message: "Account Validated.",
-            token: req.query.data, // BALIK APA ADANYA
-            url: "",
-            accountType: "growtopia"
-        });
+    let _token = '';
+    let growId = '';
+    let password = '';
+
+    // Windows / Android
+    if (req.body && Object.keys(req.body).length > 0) {
+        _token = req.body._token || '';
+        growId = req.body.growId || '';
+        password = req.body.password || '';
     }
 
-    // Android / Windows: POST
-    const _token = req.body?._token || '';
-    const growId = req.body?.growId || '';
-    const password = req.body?.password || '';
+    // iOS (GET ?data=)
+    if (req.query && req.query.data) {
+        const decoded = Buffer.from(req.query.data, 'base64').toString();
+        const params = new URLSearchParams(decoded);
 
-    // ❗ JANGAN VALIDASI
-    const credentialString =
+        _token = params.get('_token') || _token;
+        growId = params.get('growId') || growId;
+        password = params.get('password') || password;
+    }
+
+    // ⚠️ JANGAN VALIDASI
+    const finalString =
         `_token=${_token}&growId=${growId}&password=${password}`;
 
-    const encodedCredentials =
-        Buffer.from(credentialString).toString('base64');
+    const finalToken = Buffer
+        .from(finalString)
+        .toString('base64');
 
     res.json({
         status: "success",
         message: "Account Validated.",
-        token: encodedCredentials,
+        token: finalToken,
         url: "",
         accountType: "growtopia"
     });
 });
+
 
 
 
