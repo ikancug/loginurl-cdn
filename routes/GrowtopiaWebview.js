@@ -12,8 +12,13 @@ module.exports = (app) => {
         res.send(`{"status":"success","message":"Account Validated.","token":"${data}","url":"","accountType":"growtopia"}`);
     });
 
-    // 🔥 FIX UTAMA: TIDAK REDIRECT
+    // 🔥 STEP 1: WAJIB REDIRECT
     app.all('/player/growid/checktoken', (req, res) => {
+        res.redirect(307, '/player/growid/validate/checktoken');
+    });
+
+    // 🔥 STEP 2: VALIDATE TOKEN (IOS SAFE)
+    app.all('/player/growid/validate/checktoken', (req, res) => {
 
         let refreshToken =
             req.body?.refreshToken ||
@@ -25,7 +30,9 @@ module.exports = (app) => {
             .replace(/ /g, '+')
             .replace(/\n/g, '');
 
-        // ✔ Growtopia TIDAK peduli isi token
+        // ❌ JANGAN DECODE
+        // ✔ LANGSUNG BALIK TOKEN
+
         res.send(`{
             "status":"success",
             "message":"Token is valid.",
@@ -34,5 +41,4 @@ module.exports = (app) => {
             "accountType":"growtopia"
         }`);
     });
-
 };
