@@ -2,8 +2,6 @@ const path = require('path');
 const express = require('express');
 
 module.exports = (app) => {
-
-    // ✅ HANYA urlencoded (AMAN)
     app.use(express.urlencoded({ extended: false }));
 
     app.use((req, res, next) => {
