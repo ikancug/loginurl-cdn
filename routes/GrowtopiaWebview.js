@@ -9,38 +9,59 @@ module.exports = (app) => {
     ========================= */
     app.all('/player/login/dashboard', (req, res) => {
 
-        // client data (optional)
-        const clientData = querystring.stringify(req.body || {});
-        const encodedClientData = Buffer.from(clientData).toString('base64');
-
-        res.render('growtopia/DashboardView', {
-            cnf,
-            _token: encodedClientData
+    const rawData =
+        req.body?.data ||
+        req.query?.data ||
+        JSON.stringify({
+            platform: "ios",
+            rid: Date.now().toString()
         });
+
+    const encodedClientData = Buffer
+        .from(rawData)
+        .toString('base64');
+
+    res.render('growtopia/DashboardView', {
+        cnf,
+        _token: encodedClientData
     });
+});
+
 
     /* =========================
        2️⃣ LOGIN VALIDATE
     ========================= */
     app.post('/player/growid/login/validate', (req, res) => {
 
-        const { _token, growId, password } = req.body;
+    const _token = req.body._token || '';
+    const growId = req.body.growId || '';
+    const password = req.body.password || '';
 
-        // gabungkan SESUAI SPEC
-        const credentialString =
-            `_token=${_token}&growId=${growId}&password=${password}`;
-
-        const encodedCredentials =
-            Buffer.from(credentialString).toString('base64');
-
-        res.json({
-            status: "success",
-            message: "Account Validated.",
-            token: encodedCredentials,
+    if (!growId || !password) {
+        return res.json({
+            status: "failed",
+            message: "Invalid credentials.",
+            token: "",
             url: "",
             accountType: "growtopia"
         });
+    }
+
+    const credentialString =
+        `_token=${_token}&growId=${growId}&password=${password}`;
+
+    const encodedCredentials =
+        Buffer.from(credentialString).toString('base64');
+
+    res.json({
+        status: "success",
+        message: "Account Validated.",
+        token: encodedCredentials,
+        url: "",
+        accountType: "growtopia"
     });
+});
+
 
     /* =========================
        4️⃣ CHECKTOKEN (REDIRECT)
