@@ -1,15 +1,5 @@
 const path = require('path');
-const crypto = require('crypto');
 const cnf = require(path.join(__dirname, '..', 'Config.js'));
-
-// SIMPAN TOKEN PER DEVICE
-const deviceTokenMap = new Map();
-
-// HASH DEVICE (TIDAK PENGARUHI RESPONSE)
-function getDeviceHash(req) {
-    const ua = req.headers['user-agent'] || 'unknown';
-    return crypto.createHash('sha256').update(ua).digest('hex');
-}
 
 module.exports = (app) => {
 
@@ -25,16 +15,13 @@ module.exports = (app) => {
     // ======================
     app.all('/player/growid/login/validate', (req, res) => {
 
-        // TOKEN ASLI, LANGSUNG
+        // TOKEN ASLI DARI DEVICE
         const token = decodeURIComponent(req.query.data || '');
 
-        // SIMPAN TOKEN BERDASARKAN DEVICE
-        const deviceHash = getDeviceHash(req);
-        if (token) {
-            deviceTokenMap.set(deviceHash, token);
-        }
+        // ⚠️ TIDAK DISIMPAN
+        // ⚠️ TIDAK DIHASH
+        // ⚠️ TIDAK DIUBAH
 
-        // ⚠️ RESPONSE HARUS SAMA SEPERTI KODE ASLI
         res.send(
             `{"status":"success","message":"Account Validated.","token":"${token}","url":"","accountType":"growtopia"}`
         );
@@ -52,15 +39,17 @@ module.exports = (app) => {
     // ======================
     app.all('/player/growid/validate/checktoken', (req, res) => {
 
-        const deviceHash = getDeviceHash(req);
+        // TOKEN SELALU DATANG DARI DEVICE
+        let token =
+            req.body?.refreshToken ||
+            req.query?.refreshToken ||
+            '';
 
-        // AMBIL TOKEN DEVICE
-        let token = deviceTokenMap.get(deviceHash);
+        // FIX IOS BASE64
+        token = token.replace(/ /g, '+').replace(/\n/g, '');
 
-        // 🔥 FALLBACK: JIKA TIDAK ADA, PAKAI TOKEN REQUEST
-        if (!token) {
-            token = req.query.refreshToken || '';
-        }
+        // ⚠️ SERVER TIDAK MENENTUKAN TOKEN
+        // ⚠️ SERVER HANYA MEMANTULKAN
 
         res.send(
             `{"status":"success","message":"Token is valid.","token":"${token}","url":"","accountType":"growtopia"}`
