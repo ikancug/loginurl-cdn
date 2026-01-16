@@ -1,17 +1,10 @@
 const path = require('path');
 const cnf = require(path.join(__dirname, '..', 'Config.js'));
 
-// SIMPAN TOKEN LOGIN (MEMORY)
-const tokenStore = new Map();
+// SIMPAN TOKEN LOGIN TERAKHIR
+let lastLoginToken = '';
 
 module.exports = (app) => {
-
-    // =========================
-    // DASHBOARD
-    // =========================
-    app.all('/player/login/dashboard', (req, res) => {
-        res.render('growtopia/DashboardView', { cnf });
-    });
 
     // =========================
     // LOGIN VALIDATE (TOKEN ASLI)
@@ -22,8 +15,8 @@ module.exports = (app) => {
             .replace(/ /g, '+')
             .replace(/\n/g, '');
 
-        // SIMPAN TOKEN
-        tokenStore.set(token, true);
+        // SIMPAN TOKEN INI
+        lastLoginToken = token;
 
         res.setHeader('Content-Type', 'text/plain');
         res.send(
@@ -37,41 +30,22 @@ module.exports = (app) => {
     // STEP 1 — REDIRECT (WAJIB)
     // =========================
     app.all('/player/growid/checktoken', (req, res) => {
-
-        const token =
-            req.body?.refreshToken ||
-            req.query?.refreshToken ||
-            '';
-
-        // JANGAN UBAH TOKEN
-        res.redirect(
-            307,
-            '/player/growid/validate/checktoken?token=' +
-            encodeURIComponent(token)
-        );
+        res.redirect(307, '/player/growid/validate/checktoken');
     });
 
     // =========================
-    // STEP 2 — CHECK TOKEN (BALIK TOKEN YANG SAMA)
+    // STEP 2 — CHECKTOKEN
+    // TOKEN HARUS SAMA DENGAN LOGIN VALIDATE
     // =========================
     app.all('/player/growid/validate/checktoken', (req, res) => {
 
-        const token = (req.query.token || '')
-            .replace(/ /g, '+')
-            .replace(/\n/g, '');
+        // ❗ ABAIKAN refreshToken
+        // ❗ PAKAI TOKEN LOGIN VALIDATE
 
         res.setHeader('Content-Type', 'text/plain');
-
-        // TOKEN HARUS PERNAH DITERIMA DI login/validate
-        if (!tokenStore.has(token)) {
-            return res.send(
-                '{"status":"error","message":"Invalid token","url":""}'
-            );
-        }
-
         res.send(
             '{"status":"success","message":"Token is valid.","token":"' +
-            token +
+            lastLoginToken +
             '","url":"","accountType":"growtopia"}'
         );
     });
