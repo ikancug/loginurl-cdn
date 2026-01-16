@@ -2,38 +2,18 @@ const path = require('path');
 const crypto = require('crypto');
 const cnf = require(path.join(__dirname, '..', 'Config.js'));
 
-// ======================
-// SIMPAN TOKEN PER DEVICE
-// ======================
+// SIMPAN TOKEN PER DEVICE HASH
 const deviceTokenMap = new Map();
 
-// ======================
-// DEVICE HASH (STABIL)
-// ======================
 function getDeviceHash(req) {
-    const ua = (req.headers['user-agent'] || 'unknown')
-        .replace(/\s+/g, ' ')
-        .trim();
+    const ua = req.headers['user-agent'] || 'unknown';
+    const ae = req.headers['accept-encoding'] || 'none';
 
+    // HASH STABIL (1 DEVICE = 1 HASH)
     return crypto
         .createHash('sha256')
-        .update(ua)
+        .update(ua + '|' + ae)
         .digest('hex');
-}
-
-// ======================
-// SEND RESPONSE (ANTI STUCK WINDOWS)
-// ======================
-function sendPlain(res, body) {
-    const buf = Buffer.from(body, 'utf8');
-
-    res.writeHead(200, {
-        'Content-Type': 'text/plain',
-        'Content-Length': buf.length,
-        'Connection': 'close'
-    });
-
-    res.end(buf);
 }
 
 module.exports = (app) => {
@@ -55,27 +35,22 @@ module.exports = (app) => {
 
         const deviceHash = getDeviceHash(req);
 
-        if (token) {
-            deviceTokenMap.set(deviceHash, token);
-        }
+        // SIMPAN TOKEN TERAKHIR DEVICE
+        deviceTokenMap.set(deviceHash, token);
 
-        const body =
+        res.setHeader('Content-Type', 'text/plain');
+        res.end(
             '{"status":"success","message":"Account Validated.","token":"' +
             token +
-            '","url":"","accountType":"growtopia"}';
-
-        sendPlain(res, body);
+            '","url":"","accountType":"growtopia"}'
+        );
     });
 
     // ======================
     // CHECKTOKEN (REDIRECT WAJIB)
     // ======================
     app.all('/player/growid/checktoken', (req, res) => {
-        res.writeHead(307, {
-            Location: '/player/growid/validate/checktoken',
-            Connection: 'close'
-        });
-        res.end();
+        res.redirect(307, '/player/growid/validate/checktoken');
     });
 
     // ======================
@@ -86,11 +61,11 @@ module.exports = (app) => {
         const deviceHash = getDeviceHash(req);
         const token = deviceTokenMap.get(deviceHash) || '';
 
-        const body =
+        res.setHeader('Content-Type', 'text/plain');
+        res.end(
             '{"status":"success","message":"Token is valid.","token":"' +
             token +
-            '","url":"","accountType":"growtopia"}';
-
-        sendPlain(res, body);
+            '","url":"","accountType":"growtopia"}'
+        );
     });
 };
