@@ -3,23 +3,28 @@ const cnf = require(path.join(__dirname, '..', 'Config.js'));
 
 module.exports = (app) => {
 
+    // =========================
     // DASHBOARD
+    // =========================
     app.all('/player/login/dashboard', (req, res) => {
         res.render('growtopia/DashboardView', { cnf });
     });
 
+    // =========================
     // LOGIN VALIDATE
+    // =========================
     app.all('/player/growid/login/validate', (req, res) => {
-        res.json({
-            status: "success",
-            message: "Account Validated.",
-            token: req.query.data || "",
-            url: "",
-            accountType: "growtopia"
-        });
+        res.setHeader('Content-Type', 'text/plain');
+        res.send(
+            '{"status":"success","message":"Account Validated.","token":"' +
+            (req.query.data || '') +
+            '","url":"","accountType":"growtopia"}'
+        );
     });
 
-    // STEP 1 — REDIRECT WAJIB
+    // =========================
+    // STEP 1: REDIRECT (WAJIB)
+    // =========================
     app.all('/player/growid/checktoken', (req, res) => {
 
         const refreshToken =
@@ -27,7 +32,6 @@ module.exports = (app) => {
             req.query?.refreshToken ||
             '';
 
-        // PINDAHKAN TOKEN KE QUERY (iOS SAFE)
         res.redirect(
             307,
             '/player/growid/validate/checktoken?refreshToken=' +
@@ -35,7 +39,9 @@ module.exports = (app) => {
         );
     });
 
-    // STEP 2 — VALIDATE TOKEN (FINAL)
+    // =========================
+    // STEP 2: VALIDATE TOKEN (iOS SAFE)
+    // =========================
     app.all('/player/growid/validate/checktoken', (req, res) => {
 
         let refreshToken =
@@ -43,27 +49,18 @@ module.exports = (app) => {
             req.body?.refreshToken ||
             '';
 
-        // FIX BASE64 iOS
-        refreshToken = refreshToken
+        refreshToken = (refreshToken || '')
             .replace(/ /g, '+')
             .replace(/\n/g, '');
 
-        // ❗ JANGAN CEK growid / password
-        // ❗ iOS TIDAK PERNAH MENGIRIM ITU
+        // ❗ Growtopia iOS WAJIB text/plain
+        res.setHeader('Content-Type', 'text/plain');
 
-        if (!refreshToken) {
-            return res.json({
-                status: "error",
-                message: "Invalid token"
-            });
-        }
-
-        res.json({
-            status: "success",
-            message: "Token is valid.",
-            token: refreshToken,
-            url: "",
-            accountType: "growtopia"
-        });
+        // ❗ HARUS STRING JSON 1 BARIS
+        res.send(
+            '{"status":"success","message":"Token is valid.","token":"' +
+            refreshToken +
+            '","url":"","accountType":"growtopia"}'
+        );
     });
 };
