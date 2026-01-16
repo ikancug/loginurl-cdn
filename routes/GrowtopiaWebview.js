@@ -8,17 +8,15 @@ module.exports = (app) => {
     });
 
     // ======================
-    // LOGIN VALIDATE
+    // LOGIN VALIDATE (JANGAN REDIRECT)
     // ======================
     app.all('/player/growid/login/validate', (req, res) => {
 
-        // ❌ JANGAN decodeURIComponent
-        // ✔ BASE64 HARUS APA ADANYA
         let data = req.query.data || '';
         data = data.replace(/ /g, '+').replace(/\n/g, '');
 
         res.setHeader('Content-Type', 'text/plain');
-        res.end(
+        res.send(
             '{"status":"success","message":"Account Validated.","token":"' +
             data +
             '","url":"","accountType":"growtopia"}'
@@ -47,7 +45,7 @@ module.exports = (app) => {
             .replace(/\n/g, '');
 
         res.setHeader('Content-Type', 'text/plain');
-        res.end(
+        res.send(
             '{"status":"success","message":"Token is valid.","token":"' +
             refreshToken +
             '","url":"","accountType":"growtopia"}'
