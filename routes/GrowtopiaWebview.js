@@ -1,6 +1,9 @@
 const path = require('path');
 const cnf = require(path.join(__dirname, '..', 'Config.js'));
 
+// SIMPAN TOKEN LOGIN (MEMORY)
+const tokenStore = new Map();
+
 module.exports = (app) => {
 
     // =========================
@@ -11,55 +14,64 @@ module.exports = (app) => {
     });
 
     // =========================
-    // LOGIN VALIDATE
+    // LOGIN VALIDATE (TOKEN ASLI)
     // =========================
     app.all('/player/growid/login/validate', (req, res) => {
+
+        const token = (req.query.data || '')
+            .replace(/ /g, '+')
+            .replace(/\n/g, '');
+
+        // SIMPAN TOKEN
+        tokenStore.set(token, true);
+
         res.setHeader('Content-Type', 'text/plain');
         res.send(
             '{"status":"success","message":"Account Validated.","token":"' +
-            (req.query.data || '') +
+            token +
             '","url":"","accountType":"growtopia"}'
         );
     });
 
     // =========================
-    // STEP 1: REDIRECT (WAJIB)
+    // STEP 1 — REDIRECT (WAJIB)
     // =========================
     app.all('/player/growid/checktoken', (req, res) => {
 
-        const refreshToken =
+        const token =
             req.body?.refreshToken ||
             req.query?.refreshToken ||
             '';
 
+        // JANGAN UBAH TOKEN
         res.redirect(
             307,
-            '/player/growid/validate/checktoken?refreshToken=' +
-            encodeURIComponent(refreshToken)
+            '/player/growid/validate/checktoken?token=' +
+            encodeURIComponent(token)
         );
     });
 
     // =========================
-    // STEP 2: VALIDATE TOKEN (iOS SAFE)
+    // STEP 2 — CHECK TOKEN (BALIK TOKEN YANG SAMA)
     // =========================
     app.all('/player/growid/validate/checktoken', (req, res) => {
 
-        let refreshToken =
-            req.query?.refreshToken ||
-            req.body?.refreshToken ||
-            '';
-
-        refreshToken = (refreshToken || '')
+        const token = (req.query.token || '')
             .replace(/ /g, '+')
             .replace(/\n/g, '');
 
-        // ❗ Growtopia iOS WAJIB text/plain
         res.setHeader('Content-Type', 'text/plain');
 
-        // ❗ HARUS STRING JSON 1 BARIS
+        // TOKEN HARUS PERNAH DITERIMA DI login/validate
+        if (!tokenStore.has(token)) {
+            return res.send(
+                '{"status":"error","message":"Invalid token","url":""}'
+            );
+        }
+
         res.send(
             '{"status":"success","message":"Token is valid.","token":"' +
-            refreshToken +
+            token +
             '","url":"","accountType":"growtopia"}'
         );
     });
