@@ -1,83 +1,69 @@
-const http = require('http');
-const url = require('url');
+const path = require('path');
+const crypto = require('crypto');
+const cnf = require(path.join(__dirname, '..', 'Config.js'));
 
+// SIMPAN TOKEN PER DEVICE
 const deviceTokenMap = new Map();
 
+// HASH DEVICE (TIDAK PENGARUHI RESPONSE)
 function getDeviceHash(req) {
-    const ua = (req.headers['user-agent'] || 'unknown')
-        .replace(/\s+/g, ' ')
-        .trim();
-    return ua; // cukup UA, jangan hash juga tidak apa
+    const ua = req.headers['user-agent'] || 'unknown';
+    return crypto.createHash('sha256').update(ua).digest('hex');
 }
 
-function send(res, body, status = 200, extraHeaders = {}) {
-    const buf = Buffer.from(body, 'utf8');
+module.exports = (app) => {
 
-    res.writeHead(status, {
-        'Content-Type': 'text/plain',
-        'Content-Length': buf.length,
-        'Connection': 'close',
-        ...extraHeaders
+    // ======================
+    // DASHBOARD
+    // ======================
+    app.all('/player/login/dashboard', (req, res) => {
+        res.render('growtopia/DashboardView', { cnf });
     });
-
-    res.end(buf);
-}
-
-http.createServer((req, res) => {
-    const parsed = url.parse(req.url, true);
-    const path = parsed.pathname;
 
     // ======================
     // LOGIN VALIDATE
     // ======================
-    if (path === '/player/growid/login/validate') {
+    app.all('/player/growid/login/validate', (req, res) => {
 
-        let token = parsed.query.data || '';
-        token = token.replace(/ /g, '+').replace(/\n/g, '');
+        // TOKEN ASLI, LANGSUNG
+        const token = decodeURIComponent(req.query.data || '');
 
-        const device = getDeviceHash(req);
-        if (token) deviceTokenMap.set(device, token);
+        // SIMPAN TOKEN BERDASARKAN DEVICE
+        const deviceHash = getDeviceHash(req);
+        if (token) {
+            deviceTokenMap.set(deviceHash, token);
+        }
 
-        return send(
-            res,
-            '{"status":"success","message":"Account Validated.","token":"' +
-            token +
-            '","url":"","accountType":"growtopia"}'
+        // ⚠️ RESPONSE HARUS SAMA SEPERTI KODE ASLI
+        res.send(
+            `{"status":"success","message":"Account Validated.","token":"${token}","url":"","accountType":"growtopia"}`
         );
-    }
+    });
 
     // ======================
-    // CHECKTOKEN REDIRECT
+    // CHECKTOKEN (REDIRECT WAJIB)
     // ======================
-    if (path === '/player/growid/checktoken') {
-        res.writeHead(307, {
-            Location: '/player/growid/validate/checktoken',
-            Connection: 'close'
-        });
-        return res.end();
-    }
+    app.all('/player/growid/checktoken', (req, res) => {
+        res.redirect(307, '/player/growid/validate/checktoken');
+    });
 
     // ======================
     // VALIDATE CHECKTOKEN
     // ======================
-    if (path === '/player/growid/validate/checktoken') {
+    app.all('/player/growid/validate/checktoken', (req, res) => {
 
-        const device = getDeviceHash(req);
-        const token = deviceTokenMap.get(device) || '';
+        const deviceHash = getDeviceHash(req);
 
-        return send(
-            res,
-            '{"status":"success","message":"Token is valid.","token":"' +
-            token +
-            '","url":"","accountType":"growtopia"}'
+        // AMBIL TOKEN DEVICE
+        let token = deviceTokenMap.get(deviceHash);
+
+        // 🔥 FALLBACK: JIKA TIDAK ADA, PAKAI TOKEN REQUEST
+        if (!token) {
+            token = req.query.refreshToken || '';
+        }
+
+        res.send(
+            `{"status":"success","message":"Token is valid.","token":"${token}","url":"","accountType":"growtopia"}`
         );
-    }
-
-    // ======================
-    // DEFAULT
-    // ======================
-    send(res, 'OK');
-
-}).listen(17091, () => {
-    console.log('Growtopia server listening on port 17091');
-});
+    });
+};
