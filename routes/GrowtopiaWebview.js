@@ -1,67 +1,70 @@
-const crypto = require('crypto');
 const path = require('path');
+const crypto = require('crypto');
 const cnf = require(path.join(__dirname, '..', 'Config.js'));
 
-// SIMPAN TOKEN PER DEVICE
+// SIMPAN TOKEN PER DEVICE HASH
 const deviceTokenMap = new Map();
 
-// BUAT FINGERPRINT DEVICE
 function getDeviceHash(req) {
-    const ua = (req.headers['user-agent'] || '')
-        .replace(/\d+(\.\d+)+/g, ''); // buang versi berubah-ubah
+    const ua = req.headers['user-agent'] || 'unknown';
+    const ae = req.headers['accept-encoding'] || 'none';
 
-    const lang = req.headers['accept-language'] || '';
-    const platform = req.headers['sec-ch-ua-platform'] || '';
-
-    const raw = `${ua}|${lang}|${platform}`;
-
+    // HASH STABIL (1 DEVICE = 1 HASH)
     return crypto
         .createHash('sha256')
-        .update(raw)
+        .update(ua + '|' + ae)
         .digest('hex');
 }
 
 module.exports = (app) => {
 
+    // ======================
+    // DASHBOARD
+    // ======================
     app.all('/player/login/dashboard', (req, res) => {
         res.render('growtopia/DashboardView', { cnf });
     });
 
-    // 🔐 LOGIN VALIDATE
+    // ======================
+    // LOGIN VALIDATE
+    // ======================
     app.all('/player/growid/login/validate', (req, res) => {
 
-        let data = req.query.data || '';
-        data = data.replace(/ /g, '+').replace(/\n/g, '');
+        let token = req.query.data || '';
+        token = token.replace(/ /g, '+').replace(/\n/g, '');
 
         const deviceHash = getDeviceHash(req);
 
-        // SIMPAN TOKEN ASLI PER DEVICE
-        if (data) {
-            deviceTokenMap.set(deviceHash, data);
-        }
+        // SIMPAN TOKEN TERAKHIR DEVICE
+        deviceTokenMap.set(deviceHash, token);
 
-        // ❗ RESPONSE TETAP SAMA
-        res.send(
+        res.setHeader('Content-Type', 'text/plain');
+        res.end(
             '{"status":"success","message":"Account Validated.","token":"' +
-            data +
+            token +
             '","url":"","accountType":"growtopia"}'
         );
     });
 
-    // 🔁 WAJIB REDIRECT
+    // ======================
+    // CHECKTOKEN (REDIRECT WAJIB)
+    // ======================
     app.all('/player/growid/checktoken', (req, res) => {
         res.redirect(307, '/player/growid/validate/checktoken');
     });
 
-    // ✅ CHECK TOKEN
+    // ======================
+    // VALIDATE CHECKTOKEN
+    // ======================
     app.all('/player/growid/validate/checktoken', (req, res) => {
 
         const deviceHash = getDeviceHash(req);
-        const savedToken = deviceTokenMap.get(deviceHash) || '';
+        const token = deviceTokenMap.get(deviceHash) || '';
 
-        res.send(
+        res.setHeader('Content-Type', 'text/plain');
+        res.end(
             '{"status":"success","message":"Token is valid.","token":"' +
-            savedToken +
+            token +
             '","url":"","accountType":"growtopia"}'
         );
     });
