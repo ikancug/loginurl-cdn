@@ -3,63 +3,60 @@ const cnf = require(path.join(__dirname, '..', 'Config.js'));
 
 module.exports = (app) => {
 
-    // =========================
     // DASHBOARD
-    // =========================
     app.all('/player/login/dashboard', (req, res) => {
         res.render('growtopia/DashboardView', { cnf });
     });
 
-    // =========================
     // LOGIN VALIDATE
-    // =========================
     app.all('/player/growid/login/validate', (req, res) => {
-        const data = decodeURIComponent(req.query.data || '');
         res.json({
             status: "success",
             message: "Account Validated.",
-            token: data,
+            token: req.query.data || "",
             url: "",
             accountType: "growtopia"
         });
     });
 
-    // =========================
-    // STEP 1: WAJIB REDIRECT (iOS FIX)
-    // =========================
+    // STEP 1 — REDIRECT WAJIB
     app.all('/player/growid/checktoken', (req, res) => {
 
-        // AMBIL TOKEN DARI BODY / QUERY
         const refreshToken =
             req.body?.refreshToken ||
             req.query?.refreshToken ||
             '';
 
-        // iOS SAFE
-        const safeToken = encodeURIComponent(refreshToken);
-
-        // REDIRECT + PINDAH KE QUERY
+        // PINDAHKAN TOKEN KE QUERY (iOS SAFE)
         res.redirect(
             307,
-            `/player/growid/validate/checktoken?refreshToken=${safeToken}`
+            '/player/growid/validate/checktoken?refreshToken=' +
+            encodeURIComponent(refreshToken)
         );
     });
 
-    // =========================
-    // STEP 2: VALIDATE TOKEN
-    // =========================
+    // STEP 2 — VALIDATE TOKEN (FINAL)
     app.all('/player/growid/validate/checktoken', (req, res) => {
 
-        // PRIORITAS QUERY (iOS)
         let refreshToken =
             req.query?.refreshToken ||
             req.body?.refreshToken ||
             '';
 
         // FIX BASE64 iOS
-        refreshToken = (refreshToken || '')
+        refreshToken = refreshToken
             .replace(/ /g, '+')
             .replace(/\n/g, '');
+
+        // ❗ JANGAN CEK growid / password
+        // ❗ iOS TIDAK PERNAH MENGIRIM ITU
+
+        if (!refreshToken) {
+            return res.json({
+                status: "error",
+                message: "Invalid token"
+            });
+        }
 
         res.json({
             status: "success",
