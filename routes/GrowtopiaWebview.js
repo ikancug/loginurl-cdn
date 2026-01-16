@@ -39,7 +39,7 @@ module.exports = (app) => {
         deviceTokenMap.set(deviceHash, token);
 
         res.setHeader('Content-Type', 'text/plain');
-        res.end(
+        res.send(
             '{"status":"success","message":"Account Validated.","token":"' +
             token +
             '","url":"","accountType":"growtopia"}'
@@ -62,7 +62,7 @@ module.exports = (app) => {
         const token = deviceTokenMap.get(deviceHash) || '';
 
         res.setHeader('Content-Type', 'text/plain');
-        res.end(
+        res.send(
             '{"status":"success","message":"Token is valid.","token":"' +
             token +
             '","url":"","accountType":"growtopia"}'
