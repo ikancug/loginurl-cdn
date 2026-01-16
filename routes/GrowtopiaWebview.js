@@ -2,10 +2,14 @@ const path = require('path');
 const crypto = require('crypto');
 const cnf = require(path.join(__dirname, '..', 'Config.js'));
 
+// ======================
 // SIMPAN TOKEN PER DEVICE
+// ======================
 const deviceTokenMap = new Map();
 
-// DEVICE HASH STABIL (WINDOWS AMAN)
+// ======================
+// DEVICE HASH (STABIL)
+// ======================
 function getDeviceHash(req) {
     const ua = (req.headers['user-agent'] || 'unknown')
         .replace(/\s+/g, ' ')
@@ -15,6 +19,21 @@ function getDeviceHash(req) {
         .createHash('sha256')
         .update(ua)
         .digest('hex');
+}
+
+// ======================
+// SEND RESPONSE (ANTI STUCK WINDOWS)
+// ======================
+function sendPlain(res, body) {
+    const buf = Buffer.from(body, 'utf8');
+
+    res.writeHead(200, {
+        'Content-Type': 'text/plain',
+        'Content-Length': buf.length,
+        'Connection': 'close'
+    });
+
+    res.end(buf);
 }
 
 module.exports = (app) => {
@@ -36,24 +55,27 @@ module.exports = (app) => {
 
         const deviceHash = getDeviceHash(req);
 
-        // SIMPAN TOKEN TERAKHIR DEVICE
         if (token) {
             deviceTokenMap.set(deviceHash, token);
         }
 
-        res.setHeader('Content-Type', 'text/plain');
-        res.end(
+        const body =
             '{"status":"success","message":"Account Validated.","token":"' +
             token +
-            '","url":"","accountType":"growtopia"}'
-        );
+            '","url":"","accountType":"growtopia"}';
+
+        sendPlain(res, body);
     });
 
     // ======================
     // CHECKTOKEN (REDIRECT WAJIB)
     // ======================
     app.all('/player/growid/checktoken', (req, res) => {
-        res.redirect(307, '/player/growid/validate/checktoken');
+        res.writeHead(307, {
+            Location: '/player/growid/validate/checktoken',
+            Connection: 'close'
+        });
+        res.end();
     });
 
     // ======================
@@ -64,11 +86,11 @@ module.exports = (app) => {
         const deviceHash = getDeviceHash(req);
         const token = deviceTokenMap.get(deviceHash) || '';
 
-        res.setHeader('Content-Type', 'text/plain');
-        res.end(
+        const body =
             '{"status":"success","message":"Token is valid.","token":"' +
             token +
-            '","url":"","accountType":"growtopia"}'
-        );
+            '","url":"","accountType":"growtopia"}';
+
+        sendPlain(res, body);
     });
 };
