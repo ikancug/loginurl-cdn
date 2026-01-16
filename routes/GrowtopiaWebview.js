@@ -7,7 +7,15 @@ let lastLoginToken = '';
 module.exports = (app) => {
 
     // =========================
-    // LOGIN VALIDATE (TOKEN ASLI)
+    // DASHBOARD (TIDAK HILANG)
+    // =========================
+    app.all('/player/login/dashboard', (req, res) => {
+        res.render('growtopia/DashboardView', { cnf });
+    });
+
+    // =========================
+    // LOGIN VALIDATE
+    // TOKEN ASLI DARI CLIENT
     // =========================
     app.all('/player/growid/login/validate', (req, res) => {
 
@@ -15,7 +23,7 @@ module.exports = (app) => {
             .replace(/ /g, '+')
             .replace(/\n/g, '');
 
-        // SIMPAN TOKEN INI
+        // SIMPAN TOKEN
         lastLoginToken = token;
 
         res.setHeader('Content-Type', 'text/plain');
@@ -27,20 +35,21 @@ module.exports = (app) => {
     });
 
     // =========================
-    // STEP 1 — REDIRECT (WAJIB)
+    // STEP 1 — CHECKTOKEN (REDIRECT WAJIB)
     // =========================
     app.all('/player/growid/checktoken', (req, res) => {
+        // Redirect tetap ada (sesuai kebutuhan Growtopia)
         res.redirect(307, '/player/growid/validate/checktoken');
     });
 
     // =========================
-    // STEP 2 — CHECKTOKEN
-    // TOKEN HARUS SAMA DENGAN LOGIN VALIDATE
+    // STEP 2 — VALIDATE CHECKTOKEN
+    // TOKEN HARUS SAMA PERSIS
     // =========================
     app.all('/player/growid/validate/checktoken', (req, res) => {
 
-        // ❗ ABAIKAN refreshToken
-        // ❗ PAKAI TOKEN LOGIN VALIDATE
+        // Abaikan refreshToken
+        // Pakai token dari login/validate
 
         res.setHeader('Content-Type', 'text/plain');
         res.send(
