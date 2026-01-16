@@ -1,31 +1,35 @@
 const path = require('path');
-const crypto = require('crypto');
 const cnf = require(path.join(__dirname, '..', 'Config.js'));
 
-const tokenMap = new Map();
+// TOKEN TERAKHIR PER DEVICE
+const deviceTokenMap = new Map();
 
-function hashToken(token) {
-    return crypto.createHash('sha256').update(token).digest('hex');
+function getDeviceKey(req) {
+    const ua = req.headers['user-agent'] || 'unknown';
+    const port = req.socket.remotePort || '0';
+    return ua + '|' + port;
 }
 
 module.exports = (app) => {
 
+    // =========================
     // DASHBOARD
+    // =========================
     app.all('/player/login/dashboard', (req, res) => {
         res.render('growtopia/DashboardView', { cnf });
     });
 
+    // =========================
     // LOGIN VALIDATE
+    // =========================
     app.all('/player/growid/login/validate', (req, res) => {
 
         const token = (req.query.data || '')
             .replace(/ /g, '+')
             .replace(/\n/g, '');
 
-        const tokenHash = hashToken(token);
-
-        // SIMPAN TOKEN BERDASARKAN TOKEN ITU SENDIRI
-        tokenMap.set(tokenHash, token);
+        const deviceKey = getDeviceKey(req);
+        deviceTokenMap.set(deviceKey, token);
 
         res.setHeader('Content-Type', 'text/plain');
         res.send(
@@ -35,37 +39,33 @@ module.exports = (app) => {
         );
     });
 
-    // CHECKTOKEN (REDIRECT)
+    // =========================
+    // CHECKTOKEN (REDIRECT WAJIB)
+    // =========================
     app.all('/player/growid/checktoken', (req, res) => {
         res.redirect(307, '/player/growid/validate/checktoken');
     });
 
+    // =========================
     // VALIDATE CHECKTOKEN
+    // =========================
     app.all('/player/growid/validate/checktoken', (req, res) => {
 
-        const refreshToken =
-            req.query?.refreshToken ||
-            req.body?.refreshToken ||
-            '';
-
-        const cleanToken = refreshToken
-            .replace(/ /g, '+')
-            .replace(/\n/g, '');
-
-        const tokenHash = hashToken(cleanToken);
+        const deviceKey = getDeviceKey(req);
+        const token = deviceTokenMap.get(deviceKey);
 
         res.setHeader('Content-Type', 'text/plain');
 
-        if (!tokenMap.has(tokenHash)) {
+        // ❗ JANGAN ERRORKAN iOS
+        if (!token) {
             return res.send(
-                '{"status":"error","message":"Invalid token","url":""}'
+                '{"status":"success","message":"Token is valid.","token":"","url":"","accountType":"growtopia"}'
             );
         }
 
-        // BALIK TOKEN LOGIN (IDENTIK)
         res.send(
             '{"status":"success","message":"Token is valid.","token":"' +
-            tokenMap.get(tokenHash) +
+            token +
             '","url":"","accountType":"growtopia"}'
         );
     });
