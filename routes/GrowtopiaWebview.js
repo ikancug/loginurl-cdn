@@ -38,7 +38,6 @@ module.exports = (app) => {
         // SIMPAN TOKEN TERAKHIR DEVICE
         deviceTokenMap.set(deviceHash, token);
 
-        res.setHeader('Content-Type', 'text/plain');
         res.send(
             '{"status":"success","message":"Account Validated.","token":"' +
             token +
@@ -61,7 +60,6 @@ module.exports = (app) => {
         const deviceHash = getDeviceHash(req);
         const token = deviceTokenMap.get(deviceHash) || '';
 
-        res.setHeader('Content-Type', 'text/plain');
         res.send(
             '{"status":"success","message":"Token is valid.","token":"' +
             token +
