@@ -1,30 +1,31 @@
 const path = require('path');
+const crypto = require('crypto');
 const cnf = require(path.join(__dirname, '..', 'Config.js'));
 
-// SIMPAN TOKEN LOGIN TERAKHIR
-let lastLoginToken = '';
+const tokenMap = new Map();
+
+function hashToken(token) {
+    return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 module.exports = (app) => {
 
-    // =========================
-    // DASHBOARD (TIDAK HILANG)
-    // =========================
+    // DASHBOARD
     app.all('/player/login/dashboard', (req, res) => {
         res.render('growtopia/DashboardView', { cnf });
     });
 
-    // =========================
     // LOGIN VALIDATE
-    // TOKEN ASLI DARI CLIENT
-    // =========================
     app.all('/player/growid/login/validate', (req, res) => {
 
         const token = (req.query.data || '')
             .replace(/ /g, '+')
             .replace(/\n/g, '');
 
-        // SIMPAN TOKEN
-        lastLoginToken = token;
+        const tokenHash = hashToken(token);
+
+        // SIMPAN TOKEN BERDASARKAN TOKEN ITU SENDIRI
+        tokenMap.set(tokenHash, token);
 
         res.setHeader('Content-Type', 'text/plain');
         res.send(
@@ -34,27 +35,37 @@ module.exports = (app) => {
         );
     });
 
-    // =========================
-    // STEP 1 — CHECKTOKEN (REDIRECT WAJIB)
-    // =========================
+    // CHECKTOKEN (REDIRECT)
     app.all('/player/growid/checktoken', (req, res) => {
-        // Redirect tetap ada (sesuai kebutuhan Growtopia)
         res.redirect(307, '/player/growid/validate/checktoken');
     });
 
-    // =========================
-    // STEP 2 — VALIDATE CHECKTOKEN
-    // TOKEN HARUS SAMA PERSIS
-    // =========================
+    // VALIDATE CHECKTOKEN
     app.all('/player/growid/validate/checktoken', (req, res) => {
 
-        // Abaikan refreshToken
-        // Pakai token dari login/validate
+        const refreshToken =
+            req.query?.refreshToken ||
+            req.body?.refreshToken ||
+            '';
+
+        const cleanToken = refreshToken
+            .replace(/ /g, '+')
+            .replace(/\n/g, '');
+
+        const tokenHash = hashToken(cleanToken);
 
         res.setHeader('Content-Type', 'text/plain');
+
+        if (!tokenMap.has(tokenHash)) {
+            return res.send(
+                '{"status":"error","message":"Invalid token","url":""}'
+            );
+        }
+
+        // BALIK TOKEN LOGIN (IDENTIK)
         res.send(
             '{"status":"success","message":"Token is valid.","token":"' +
-            lastLoginToken +
+            tokenMap.get(tokenHash) +
             '","url":"","accountType":"growtopia"}'
         );
     });
