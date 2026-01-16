@@ -2,17 +2,18 @@ const path = require('path');
 const crypto = require('crypto');
 const cnf = require(path.join(__dirname, '..', 'Config.js'));
 
-// SIMPAN TOKEN PER DEVICE HASH
+// SIMPAN TOKEN PER DEVICE
 const deviceTokenMap = new Map();
 
+// DEVICE HASH STABIL (WINDOWS AMAN)
 function getDeviceHash(req) {
-    const ua = req.headers['user-agent'] || 'unknown';
-    const ae = req.headers['accept-encoding'] || 'none';
+    const ua = (req.headers['user-agent'] || 'unknown')
+        .replace(/\s+/g, ' ')
+        .trim();
 
-    // HASH STABIL (1 DEVICE = 1 HASH)
     return crypto
         .createHash('sha256')
-        .update(ua + '|' + ae)
+        .update(ua)
         .digest('hex');
 }
 
@@ -36,10 +37,12 @@ module.exports = (app) => {
         const deviceHash = getDeviceHash(req);
 
         // SIMPAN TOKEN TERAKHIR DEVICE
-        deviceTokenMap.set(deviceHash, token);
+        if (token) {
+            deviceTokenMap.set(deviceHash, token);
+        }
 
         res.setHeader('Content-Type', 'text/plain');
-        res.send(
+        res.end(
             '{"status":"success","message":"Account Validated.","token":"' +
             token +
             '","url":"","accountType":"growtopia"}'
@@ -62,7 +65,7 @@ module.exports = (app) => {
         const token = deviceTokenMap.get(deviceHash) || '';
 
         res.setHeader('Content-Type', 'text/plain');
-        res.send(
+        res.end(
             '{"status":"success","message":"Token is valid.","token":"' +
             token +
             '","url":"","accountType":"growtopia"}'
