@@ -12,16 +12,24 @@ app.all('/player/growid/login/validate', (req, res) => {
     const data = decodeURIComponent(req.query.data || '');
 
     const userAgent = req.headers['user-agent'] || '';
-    const isIOS = userAgent.includes('iPhone') || userAgent.includes('iPad');
+    const isIOS =
+        userAgent.includes('iPhone') ||
+        userAgent.includes('iPad') ||
+        userAgent.includes('iOS');
 
-    if (isIOS) {
+    if (isIOS && data) {
 
         const ipHeader = req.headers['x-forwarded-for'];
         const ip = typeof ipHeader === 'string'
             ? ipHeader.split(',')[0].trim()
             : 'unknown';
+
         const deviceKey = ip + '|' + userAgent;
-        sessionStore.set(deviceKey, data);
+
+        loginStore.set(deviceKey, {
+            token: data,
+            time: Date.now()
+        });
     }
 
     res.setHeader('Content-Type', 'application/json');
@@ -43,31 +51,44 @@ app.all('/player/growid/login/validate', (req, res) => {
 app.all('/player/growid/validate/checktoken', (req, res) => {
 
     const userAgent = req.headers['user-agent'] || '';
-    const isIOS = userAgent.includes('iPhone') || userAgent.includes('iPad');
-    let token = '';
+    const isIOS =
+        userAgent.includes('iPhone') ||
+        userAgent.includes('iPad') ||
+        userAgent.includes('iOS');
+
+    let refreshToken = '';
+
     if (isIOS) {
+
         const ipHeader = req.headers['x-forwarded-for'];
         const ip = typeof ipHeader === 'string'
             ? ipHeader.split(',')[0].trim()
             : 'unknown';
+
         const deviceKey = ip + '|' + userAgent;
-        token = sessionStore.get(deviceKey) || '';
+
+        const session = loginStore.get(deviceKey);
+
+        refreshToken = session ? session.token : '';
+
     } else {
 
-        // Windows / Android tetap pakai refreshToken
-        token =
+        // Android / Windows tetap seperti biasa
+        refreshToken =
             req.body?.refreshToken ||
             req.query?.refreshToken ||
             '';
     }
-    token = String(token)
+
+    refreshToken = String(refreshToken)
         .replace(/ /g, '+')
         .replace(/\n/g, '');
+
     res.setHeader('Content-Type', 'application/json');
     res.send(`{
         "status":"success",
         "message":"Token is valid.",
-        "token":"${token}",
+        "token":"${refreshToken}",
         "url":"",
         "accountType":"growtopia"
     }`);
