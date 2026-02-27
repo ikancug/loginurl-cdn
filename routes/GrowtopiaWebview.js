@@ -26,7 +26,11 @@ app.all('/player/growid/checktoken', (req, res) => {
     token = (token || '')
         .replace(/ /g, '+')
         .replace(/\n/g, '');
-
+    
+    console.log("HEADERS:", req.headers);
+console.log("BODY:", req.body);
+console.log("QUERY:", req.query);
+    
     res.redirect(
         307,
         '/player/growid/validate/checktoken?token=' +
