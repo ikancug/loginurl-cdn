@@ -32,7 +32,6 @@ app.all('/player/growid/login/validate', (req, res) => {
         });
     }
 
-    res.setHeader('Content-Type', 'application/json');
     res.send(`{
         "status":"success",
         "message":"Account Validated.",
