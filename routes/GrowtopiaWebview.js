@@ -15,21 +15,33 @@ module.exports = (app) => {
     // 🔥 STEP 1: WAJIB REDIRECT
 // 🔥 STEP 1: WAJIB REDIRECT
 app.all('/player/growid/checktoken', (req, res) => {
- res.redirect(307, '/player/growid/validate/checktoken');
-});
 
-
-// 🔥 STEP 2: VALIDATE TOKEN
-app.all('/player/growid/validate/checktoken', (req, res) => {
-
-    let refreshToken =
+    let token =
         req.body?.refreshToken ||
         req.query?.refreshToken ||
         req.body?.valKey ||
         req.query?.valKey ||
         '';
 
-    refreshToken = (refreshToken || '')
+    token = (token || '')
+        .replace(/ /g, '+')
+        .replace(/\n/g, '');
+
+    res.redirect(
+        307,
+        '/player/growid/validate/checktoken?token=' +
+        encodeURIComponent(token)
+    );
+});
+
+// 🔥 STEP 2: VALIDATE TOKEN
+app.all('/player/growid/validate/checktoken', (req, res) => {
+
+    let token =
+        req.query.token ||
+        '';
+
+    token = (token || '')
         .replace(/ /g, '+')
         .replace(/\n/g, '');
 
@@ -37,7 +49,7 @@ app.all('/player/growid/validate/checktoken', (req, res) => {
     res.send(`{
         "status":"success",
         "message":"Token is valid.",
-        "token":"${refreshToken}",
+        "token":"${token}",
         "url":"",
         "accountType":"growtopia"
     }`);
