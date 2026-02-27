@@ -16,36 +16,37 @@ module.exports = (app) => {
 // 🔥 STEP 1: WAJIB REDIRECT
 app.all('/player/growid/checktoken', (req, res) => {
 
-    let token =
-        req.body?.refreshToken ||
-        req.query?.refreshToken ||
+    const valKey =
+        req.query.valKey ||
         req.body?.valKey ||
-        req.query?.valKey ||
+        req.body?.refreshToken ||
         '';
 
-    token = (token || '')
-        .replace(/ /g, '+')
-        .replace(/\n/g, '');
+    // simpan berdasarkan IP sementara
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-    res.redirect(
-        307,
-        '/player/growid/validate/checktoken?token=' +
-        encodeURIComponent(token)
-    );
-});;
+    if (valKey) {
+        tokenStore.set(ip, valKey);
+    }
+
+    res.redirect(307, '/player/growid/validate/checktoken');
+});
 
 // 🔥 STEP 2: VALIDATE TOKEN
 app.all('/player/growid/validate/checktoken', (req, res) => {
 
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
     let token =
         req.query.token ||
-        req.body?.refreshToken ||
-        req.body?.valKey ||
+        tokenStore.get(ip) ||
         '';
 
     token = (token || '')
         .replace(/ /g, '+')
         .replace(/\n/g, '');
+
+    tokenStore.delete(ip);
 
     res.setHeader('Content-Type', 'application/json');
     res.send(`{
