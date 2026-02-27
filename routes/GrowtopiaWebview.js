@@ -16,19 +16,17 @@ module.exports = (app) => {
 // 🔥 STEP 1: WAJIB REDIRECT
 app.all('/player/growid/checktoken', (req, res) => {
 
-    const requestId = req.headers['x-vercel-id'] || Math.random().toString();
+    console.log('================ CHECKTOKEN ================');
+    console.log('METHOD:', req.method);
+    console.log('URL:', req.originalUrl);
+    console.log('HEADERS:', JSON.stringify(req.headers, null, 2));
+    console.log('QUERY:', req.query);
+    console.log('BODY TYPE:', typeof req.body);
+    console.log('BODY:', req.body);
+    console.log('RAW BODY STRING:', typeof req.body === 'string' ? req.body : 'NOT STRING');
+    console.log('============================================');
 
-    const valKey =
-        req.query.valKey ||
-        req.body?.valKey ||
-        req.body?.refreshToken ||
-        '';
-
-    if (valKey) {
-        tokenStore.set(requestId, valKey);
-    }
-
-    res.redirect(307, '/player/growid/validate/checktoken?rid=' + encodeURIComponent(requestId));
+    res.status(200).send('debug');
 });
 
 // 🔥 STEP 2: VALIDATE TOKEN
