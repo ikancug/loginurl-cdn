@@ -13,42 +13,32 @@ module.exports = (app) => {
     });
 
     // 🔥 STEP 1: WAJIB REDIRECT
-// 🔥 STEP 1: WAJIB REDIRECT
-app.all('/player/growid/checktoken', (req, res) => {
+    app.all('/player/growid/checktoken', (req, res) => {
+        res.redirect(307, '/player/growid/validate/checktoken');
+    });
 
-    console.log('================ CHECKTOKEN ================');
-    console.log('METHOD:', req.method);
-    console.log('URL:', req.originalUrl);
-    console.log('HEADERS:', JSON.stringify(req.headers, null, 2));
-    console.log('QUERY:', req.query);
-    console.log('BODY TYPE:', typeof req.body);
-    console.log('BODY:', req.body);
-    console.log('RAW BODY STRING:', typeof req.body === 'string' ? req.body : 'NOT STRING');
-    console.log('============================================');
+    // 🔥 STEP 2: VALIDATE TOKEN (IOS SAFE)
+    app.all('/player/growid/validate/checktoken', (req, res) => {
 
-    res.status(200).send('debug');
-});
+        let refreshToken =
+            req.body?.refreshToken ||
+            req.query?.refreshToken ||
+            '';
 
-// 🔥 STEP 2: VALIDATE TOKEN
-app.all('/player/growid/validate/checktoken', (req, res) => {
+        // FIX BASE64 IOS
+        refreshToken = (refreshToken || '')
+            .replace(/ /g, '+')
+            .replace(/\n/g, '');
 
-    const requestId = req.query.rid;
+        // ❌ JANGAN DECODE
+        // ✔ LANGSUNG BALIK TOKEN
 
-    let token = tokenStore.get(requestId) || '';
-
-    tokenStore.delete(requestId);
-
-    token = (token || '')
-        .replace(/ /g, '+')
-        .replace(/\n/g, '');
-
-    res.setHeader('Content-Type', 'application/json');
-    res.send(`{
-        "status":"success",
-        "message":"Token is valid.",
-        "token":"${token}",
-        "url":"",
-        "accountType":"growtopia"
-    }`);
-});;
+        res.send(`{
+            "status":"success",
+            "message":"Token is valid.",
+            "token":"${refreshToken}",
+            "url":"",
+            "accountType":"growtopia"
+        }`);
+    });
 };
