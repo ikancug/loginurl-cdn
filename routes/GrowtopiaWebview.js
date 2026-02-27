@@ -41,7 +41,9 @@ app.all('/player/growid/checktoken', (req, res) => {
     refreshToken = (refreshToken || '')
         .replace(/ /g, '+')
         .replace(/\n/g, '');
-
+console.log("HEADERS:", req.headers);
+console.log("BODY:", req.body);
+console.log("QUERY:", req.query);
     // kirim lewat query supaya tidak hilang saat redirect
     res.redirect(
         307,
