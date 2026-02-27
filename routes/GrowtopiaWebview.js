@@ -13,32 +13,36 @@ module.exports = (app) => {
     });
 
     // 🔥 STEP 1: WAJIB REDIRECT
-    app.all('/player/growid/checktoken', (req, res) => {
-        res.redirect(307, '/player/growid/validate/checktoken');
-    });
+   app.all('/player/growid/checktoken', (req, res) => {
+
+    let refreshToken =
+        req.body?.refreshToken ||
+        req.query?.refreshToken ||
+        '';
+
+    refreshToken = (refreshToken || '')
+        .replace(/ /g, '+')
+        .replace(/\n/g, '');
+
+    res.redirect(307, `/player/growid/validate/checktoken?refreshToken=${encodeURIComponent(refreshToken)}`);
+});
 
     // 🔥 STEP 2: VALIDATE TOKEN (IOS SAFE)
-    app.all('/player/growid/validate/checktoken', (req, res) => {
+   app.all('/player/growid/validate/checktoken', (req, res) => {
 
-        let refreshToken =
-            req.body?.refreshToken ||
-            req.query?.refreshToken ||
-            '';
+    let refreshToken =
+        req.query.refreshToken || '';
 
-        // FIX BASE64 IOS
-        refreshToken = (refreshToken || '')
-            .replace(/ /g, '+')
-            .replace(/\n/g, '');
+    refreshToken = refreshToken
+        .replace(/ /g, '+')
+        .replace(/\n/g, '');
 
-        // ❌ JANGAN DECODE
-        // ✔ LANGSUNG BALIK TOKEN
-
-        res.send(`{
-            "status":"success",
-            "message":"Token is valid.",
-            "token":"${refreshToken}",
-            "url":"",
-            "accountType":"growtopia"
-        }`);
-    });
-};
+    res.setHeader('Content-Type', 'application/json');
+    res.send(`{
+        "status":"success",
+        "message":"Token is valid.",
+        "token":"${refreshToken}",
+        "url":"",
+        "accountType":"growtopia"
+    }`);
+});
