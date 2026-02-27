@@ -7,19 +7,22 @@ module.exports = (app) => {
         res.render('growtopia/DashboardView', { cnf });
     });
 
-    app.all('/player/growid/login/validate', (req, res) => {
+app.all('/player/growid/login/validate', (req, res) => {
 
     const data = decodeURIComponent(req.query.data || '');
 
-    const ip = (req.headers['x-forwarded-for'] || '')
-        .split(',')[0]
-        .trim();
-
     const userAgent = req.headers['user-agent'] || '';
+    const isIOS = userAgent.includes('iPhone') || userAgent.includes('iPad');
 
-    const deviceKey = ip + '|' + userAgent;
+    if (isIOS && data) {
 
-    if (data) {
+        const ipHeader = req.headers['x-forwarded-for'];
+        const ip = typeof ipHeader === 'string'
+            ? ipHeader.split(',')[0].trim()
+            : 'unknown';
+
+        const deviceKey = ip + '|' + userAgent;
+
         sessionStore.set(deviceKey, data);
     }
 
@@ -39,31 +42,37 @@ module.exports = (app) => {
     });
 
     // 🔥 STEP 2: VALIDATE TOKEN (IOS SAFE)
- app.all('/player/growid/validate/checktoken', (req, res) => {
+app.all('/player/growid/validate/checktoken', (req, res) => {
 
     const userAgent = req.headers['user-agent'] || '';
     const isIOS = userAgent.includes('iPhone') || userAgent.includes('iPad');
 
-    const ip = (req.headers['x-forwarded-for'] || '')
-        .split(',')[0]
-        .trim();
-
-    const deviceKey = ip + '|' + userAgent;
-
     let token = '';
 
     if (isIOS) {
-        // iOS ambil dari token yang disimpan
+
+        const ipHeader = req.headers['x-forwarded-for'];
+        const ip = typeof ipHeader === 'string'
+            ? ipHeader.split(',')[0].trim()
+            : 'unknown';
+
+        const deviceKey = ip + '|' + userAgent;
+
         token = sessionStore.get(deviceKey) || '';
+
+        // optional: hapus setelah dipakai
+        sessionStore.delete(deviceKey);
+
     } else {
-        // Android / Windows tetap pakai refreshToken
+
+        // Windows / Android tetap pakai refreshToken
         token =
             req.body?.refreshToken ||
             req.query?.refreshToken ||
             '';
     }
 
-    token = (token || '')
+    token = String(token)
         .replace(/ /g, '+')
         .replace(/\n/g, '');
 
