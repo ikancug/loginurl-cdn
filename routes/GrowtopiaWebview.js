@@ -16,37 +16,33 @@ module.exports = (app) => {
 // 🔥 STEP 1: WAJIB REDIRECT
 app.all('/player/growid/checktoken', (req, res) => {
 
+    const requestId = req.headers['x-vercel-id'] || Math.random().toString();
+
     const valKey =
         req.query.valKey ||
         req.body?.valKey ||
         req.body?.refreshToken ||
         '';
 
-    // simpan berdasarkan IP sementara
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
     if (valKey) {
-        tokenStore.set(ip, valKey);
+        tokenStore.set(requestId, valKey);
     }
 
-    res.redirect(307, '/player/growid/validate/checktoken');
+    res.redirect(307, '/player/growid/validate/checktoken?rid=' + encodeURIComponent(requestId));
 });
 
 // 🔥 STEP 2: VALIDATE TOKEN
 app.all('/player/growid/validate/checktoken', (req, res) => {
 
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const requestId = req.query.rid;
 
-    let token =
-        req.query.token ||
-        tokenStore.get(ip) ||
-        '';
+    let token = tokenStore.get(requestId) || '';
+
+    tokenStore.delete(requestId);
 
     token = (token || '')
         .replace(/ /g, '+')
         .replace(/\n/g, '');
-
-    tokenStore.delete(ip);
 
     res.setHeader('Content-Type', 'application/json');
     res.send(`{
@@ -56,5 +52,5 @@ app.all('/player/growid/validate/checktoken', (req, res) => {
         "url":"",
         "accountType":"growtopia"
     }`);
-});
+});;
 };
