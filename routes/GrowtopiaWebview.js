@@ -14,15 +14,13 @@ app.all('/player/growid/login/validate', (req, res) => {
     const userAgent = req.headers['user-agent'] || '';
     const isIOS = userAgent.includes('iPhone') || userAgent.includes('iPad');
 
-    if (isIOS && data) {
+    if (isIOS) {
 
         const ipHeader = req.headers['x-forwarded-for'];
         const ip = typeof ipHeader === 'string'
             ? ipHeader.split(',')[0].trim()
             : 'unknown';
-
         const deviceKey = ip + '|' + userAgent;
-
         sessionStore.set(deviceKey, data);
     }
 
@@ -46,23 +44,14 @@ app.all('/player/growid/validate/checktoken', (req, res) => {
 
     const userAgent = req.headers['user-agent'] || '';
     const isIOS = userAgent.includes('iPhone') || userAgent.includes('iPad');
-
     let token = '';
-
     if (isIOS) {
-
         const ipHeader = req.headers['x-forwarded-for'];
         const ip = typeof ipHeader === 'string'
             ? ipHeader.split(',')[0].trim()
             : 'unknown';
-
         const deviceKey = ip + '|' + userAgent;
-
         token = sessionStore.get(deviceKey) || '';
-
-        // optional: hapus setelah dipakai
-        sessionStore.delete(deviceKey);
-
     } else {
 
         // Windows / Android tetap pakai refreshToken
@@ -71,11 +60,9 @@ app.all('/player/growid/validate/checktoken', (req, res) => {
             req.query?.refreshToken ||
             '';
     }
-
     token = String(token)
         .replace(/ /g, '+')
         .replace(/\n/g, '');
-
     res.setHeader('Content-Type', 'application/json');
     res.send(`{
         "status":"success",
