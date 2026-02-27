@@ -4,7 +4,6 @@ const path = require('path');
 module.exports = (app) => {
 
     app.use(express.urlencoded({ extended: false }));
-    app.use(express.text({ type: '*/*' }));
     app.use(express.json());
 
     app.use((req, res, next) => {
