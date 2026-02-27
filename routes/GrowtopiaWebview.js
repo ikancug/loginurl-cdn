@@ -14,35 +14,14 @@ module.exports = (app) => {
 
     // 🔥 STEP 1: WAJIB REDIRECT
 app.all('/player/growid/checktoken', (req, res) => {
-
-    let refreshToken =
-        req.body?.refreshToken ||
-        req.query?.refreshToken ||
-        '';
-
-    refreshToken = (refreshToken || '')
-        .replace(/ /g, '+')
-        .replace(/\n/g, '');
-
-    // Kirim token lewat header custom
-    res.setHeader('x-refresh-token', refreshToken);
-
     res.redirect(307, '/player/growid/validate/checktoken');
 });
 
     // 🔥 STEP 2: VALIDATE TOKEN (IOS SAFE)
    app.all('/player/growid/validate/checktoken', (req, res) => {
 
-    let refreshToken =
-        req.body?.refreshToken ||
-        req.query?.refreshToken ||
-        req.headers['x-refresh-token'] ||
-        '';
-
-    refreshToken = (refreshToken || '')
-        .replace(/ /g, '+')
-        .replace(/\n/g, '');
-
+    let refreshToken = decodeURIComponent(req.query.data || '');
+       
     res.setHeader('Content-Type', 'application/json');
     res.send(`{
         "status":"success",
