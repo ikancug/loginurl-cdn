@@ -1,5 +1,6 @@
 const path = require('path');
 const cnf = require(path.join(__dirname, '..', 'Config.js'));
+const loginStore = new Map();
 
 module.exports = (app) => {
 
@@ -10,13 +11,7 @@ module.exports = (app) => {
 app.all('/player/growid/login/validate', (req, res) => {
 
     const data = decodeURIComponent(req.query.data || '');
-    res.send(`{
-        "status":"success",
-        "message":"Account Validated.",
-        "token":"${data}",
-        "url":"",
-        "accountType":"growtopia"
-    }`);
+    
     const userAgent = req.headers['user-agent'] || '';
     const isIOS =
         userAgent.includes('iPhone') ||
@@ -36,6 +31,13 @@ app.all('/player/growid/login/validate', (req, res) => {
         });
     }
     res.setHeader('Content-Type', 'application/json');
+    res.send(`{
+        "status":"success",
+        "message":"Account Validated.",
+        "token":"${data}",
+        "url":"",
+        "accountType":"growtopia"
+    }`);
 });
 
     // 🔥 STEP 1: WAJIB REDIRECT
