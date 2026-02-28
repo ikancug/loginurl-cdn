@@ -31,11 +31,7 @@ app.all('/player/growid/login/validate', (req, res) => {
     });
 
     // 🔥 STEP 2: VALIDATE TOKEN (IOS SAFE)
-    app.all('/player/growid/checktoken', (req, res) => {
-        res.redirect(307, '/player/growid/validate/checktoken');
-    });
-
-    // 🔥 STEP 2: VALIDATE TOKEN (IOS SAFE)
+     app.all('/player/growid/validate/checktoken', (req, res) => {
 const userAgent = req.headers['user-agent'] || '';
     const isIOS =
         userAgent.includes('iPhone') ||
