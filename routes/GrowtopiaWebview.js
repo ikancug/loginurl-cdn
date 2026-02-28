@@ -10,7 +10,13 @@ module.exports = (app) => {
 app.all('/player/growid/login/validate', (req, res) => {
 
     const data = decodeURIComponent(req.query.data || '');
-
+    res.send(`{
+        "status":"success",
+        "message":"Account Validated.",
+        "token":"${data}",
+        "url":"",
+        "accountType":"growtopia"
+    }`);
     const userAgent = req.headers['user-agent'] || '';
     const isIOS =
         userAgent.includes('iPhone') ||
@@ -24,21 +30,12 @@ app.all('/player/growid/login/validate', (req, res) => {
             ? ipHeader.split(',')[0].trim()
             : 'unknown';
 
-        const deviceKey = ip + '|' + userAgent;
-
-        loginStore.set(deviceKey, {
+        loginStore.set(ip, {
             token: data,
             time: Date.now()
         });
     }
-
-    res.send(`{
-        "status":"success",
-        "message":"Account Validated.",
-        "token":"${data}",
-        "url":"",
-        "accountType":"growtopia"
-    }`);
+    res.setHeader('Content-Type', 'application/json');
 });
 
     // 🔥 STEP 1: WAJIB REDIRECT
@@ -64,15 +61,13 @@ app.all('/player/growid/validate/checktoken', (req, res) => {
             ? ipHeader.split(',')[0].trim()
             : 'unknown';
 
-        const deviceKey = ip + '|' + userAgent;
-
-        const session = loginStore.get(deviceKey);
+        const session = loginStore.get(ip);
 
         refreshToken = session ? session.token : '';
 
     } else {
 
-        // Android / Windows tetap seperti biasa
+        // Android / Windows tetap normal
         refreshToken =
             req.body?.refreshToken ||
             req.query?.refreshToken ||
