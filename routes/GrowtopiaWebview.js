@@ -9,14 +9,9 @@ module.exports = (app) => {
     });
 
 app.all('/player/growid/login/validate', (req, res) => {
-
     const data = decodeURIComponent(req.query.data || '');
-    
     const userAgent = req.headers['user-agent'] || '';
-    const isIOS =
-        userAgent.includes('iPhone') ||
-        userAgent.includes('iPad') ||
-        userAgent.includes('iOS');
+    const isIOS = userAgent.includes('iPhone') || userAgent.includes('iPad');
 
     if (isIOS && data) {
 
@@ -25,20 +20,10 @@ app.all('/player/growid/login/validate', (req, res) => {
             ? ipHeader.split(',')[0].trim()
             : 'unknown';
 
-        loginStore.set(ip, {
-            token: data,
-            time: Date.now()
-        });
+        loginStore.set(ip, data); // simpan token berdasarkan IP
     }
-    res.setHeader('Content-Type', 'application/json');
-    res.send(`{
-        "status":"success",
-        "message":"Account Validated.",
-        "token":"${data}",
-        "url":"",
-        "accountType":"growtopia"
-    }`);
-});
+        res.send(`{"status":"success","message":"Account Validated.","token":"${data}","url":"","accountType":"growtopia"}`);
+    });
 
     // 🔥 STEP 1: WAJIB REDIRECT
     app.all('/player/growid/checktoken', (req, res) => {
@@ -46,30 +31,31 @@ app.all('/player/growid/login/validate', (req, res) => {
     });
 
     // 🔥 STEP 2: VALIDATE TOKEN (IOS SAFE)
-app.all('/player/growid/validate/checktoken', (req, res) => {
+    app.all('/player/growid/checktoken', (req, res) => {
+        res.redirect(307, '/player/growid/validate/checktoken');
+    });
 
-    const userAgent = req.headers['user-agent'] || '';
+    // 🔥 STEP 2: VALIDATE TOKEN (IOS SAFE)
+const userAgent = req.headers['user-agent'] || '';
     const isIOS =
         userAgent.includes('iPhone') ||
-        userAgent.includes('iPad') ||
-        userAgent.includes('iOS');
+        userAgent.includes('iPad');
 
     let refreshToken = '';
 
     if (isIOS) {
 
+        // 🔥 Ambil token dari loginStore berdasarkan IP
         const ipHeader = req.headers['x-forwarded-for'];
         const ip = typeof ipHeader === 'string'
             ? ipHeader.split(',')[0].trim()
             : 'unknown';
 
-        const session = loginStore.get(ip);
-
-        refreshToken = session ? session.token : '';
+        refreshToken = loginStore.get(ip) || '';
 
     } else {
 
-        // Android / Windows tetap normal
+        // 🔥 Android / Windows tetap seperti awal
         refreshToken =
             req.body?.refreshToken ||
             req.query?.refreshToken ||
@@ -80,7 +66,6 @@ app.all('/player/growid/validate/checktoken', (req, res) => {
         .replace(/ /g, '+')
         .replace(/\n/g, '');
 
-    res.setHeader('Content-Type', 'application/json');
     res.send(`{
         "status":"success",
         "message":"Token is valid.",
