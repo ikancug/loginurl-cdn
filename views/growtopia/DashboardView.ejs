@@ -7,11 +7,17 @@
     <link rel="stylesheet" href="/base.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="bg-transparent">
+<body class="bg-black">
     <div class="w-screen h-screen flex justify-center items-center">
-        <div class="border-2 border-[#2b4d6d] p-5 text-[#eeeeee] bg-gradient-to-br min-w-[50vw] from-blue-950 to-[#2b4d6d] rounded-lg shadow-xl shadow-[#2b4d6d]">
-            <h1 class="text-center text-2xl font-bold"><%= cnf.name %> Menu</h1>
-            <p class="opacity-70">You are now entering the login page of this server. Please enter your <span style="color:#fefefe" class="font-semibold">GrowID</span> and <span style="color:#fefefe" class="font-semibold">Password</span> if you already have an account, or log in as a guest.</p>
+        <div class="border-2 border-[#d4af37] p-5 text-[#f5e6b3] bg-gradient-to-br min-w-[50vw] from-black via-[#1a1a1a] to-[#2b2b2b] rounded-lg shadow-xl shadow-[#d4af37]">
+            <h1 class="text-center text-2xl font-bold text-[#d4af37]"><%= cnf.name %> Menu</h1>
+            <p class="opacity-80 text-[#e6c76b]">
+                You are now entering the login page of this server. Please enter your 
+                <span style="color:#d4af37" class="font-semibold">GrowID</span> and 
+                <span style="color:#d4af37" class="font-semibold">Password</span> 
+                if you already have an account, or log in as a guest.
+            </p>
+
             <button type="button"
                 class="btn btn-primary hidden"
                 data-toggle="modal"
@@ -21,36 +27,48 @@
                 data-keyboard="false"
                 hidden
             ></button>
+
             <form 
             action="/player/growid/login/validate" accept-charset="UTF-8"
             role="form"
             required="required"
             autocomplete="off" method="post" class="mt-3">
+
                 <div class="mb-1">
-                    <input
-                        name="_token"
-                        type="hidden"
-                        value=""
-                    />
-                    <label for="loginGrowId" class="block text-white text-md">GrowID:</label>
-                    <div class="flex items-center border-2 border-[#136a92] rounded bg-[#2b4d6d] px-3 py-1 gap-2">
-                        <i class="fas fa-user text-white mr-1 text-md"></i>
-                        <input type="text" name="growId" id="loginGrowId" class="w-full bg-[#2b4d6d] text-white text-md placeholder-white focus:outline-none" placeholder="Enter your growid" required>
+                    <input name="_token" type="hidden" value=""/>
+                    <label for="loginGrowId" class="block text-[#d4af37] text-md">GrowID:</label>
+                    <div class="flex items-center border-2 border-[#d4af37] rounded bg-[#1a1a1a] px-3 py-1 gap-2">
+                        <i class="fas fa-user text-[#d4af37] mr-1 text-md"></i>
+                        <input type="text" name="growId" id="loginGrowId"
+                            class="w-full bg-[#1a1a1a] text-[#f5e6b3] text-md placeholder-[#c5a63b] focus:outline-none"
+                            placeholder="Enter your growid" required>
                     </div>
                 </div>
+
                 <div class="mb-1">
-                    <label for="loginPassword" class="block text-white text-md">Password:</label>
-                    <div class="flex items-center border-2 border-[#136a92] rounded bg-[#2b4d6d] px-3 py-1 gap-2">
-                        <i class="fas fa-lock text-white mr-1 text-md"></i>
-                        <input type="password" name="password" id="loginPassword" class="w-full bg-[#2b4d6d] text-white text-md placeholder-white focus:outline-none" placeholder="Enter your password" required>
-                        <button type="button" id="toggleLogPassword" class="text-white ml-2 focus:outline-none text-xs">
+                    <label for="loginPassword" class="block text-[#d4af37] text-md">Password:</label>
+                    <div class="flex items-center border-2 border-[#d4af37] rounded bg-[#1a1a1a] px-3 py-1 gap-2">
+                        <i class="fas fa-lock text-[#d4af37] mr-1 text-md"></i>
+                        <input type="password" name="password" id="loginPassword"
+                            class="w-full bg-[#1a1a1a] text-[#f5e6b3] text-md placeholder-[#c5a63b] focus:outline-none"
+                            placeholder="Enter your password" required>
+                        <button type="button" id="toggleLogPassword"
+                            class="text-[#d4af37] ml-2 focus:outline-none text-xs">
                             <i class="fas fa-eye-slash"></i>
                         </button>
                     </div>
                 </div>
+
                 <div class="flex justify-end items-center flex-col md:flex-row gap-2 mt-3">
-                    <button id="loginButton" type="submit" class="px-2 py-1 rounded bg-[#00b8ff] text-white text-xl font-bold w-full hover:bg-[#06a4dd] transition duration-300 ease-in-out transform">Login</button>
-                    <button id="regisButton" type="button" class="px-2 py-1 rounded bg-[#00b8ff] text-white text-xl font-bold w-full hover:bg-[#06a4dd] transition duration-300 ease-in-out transform">Create New GrowID</button>
+                    <button id="loginButton" type="submit"
+                        class="px-2 py-1 rounded bg-gradient-to-r from-[#b8860b] to-[#d4af37] text-black text-xl font-bold w-full hover:brightness-110 transition duration-300 ease-in-out transform">
+                        Login
+                    </button>
+
+                    <button id="regisButton" type="button"
+                        class="px-2 py-1 rounded bg-gradient-to-r from-[#b8860b] to-[#d4af37] text-black text-xl font-bold w-full hover:brightness-110 transition duration-300 ease-in-out transform">
+                        Create New GrowID
+                    </button>
                 </div>
             </form>
         </div>
@@ -74,16 +92,13 @@
         });
     
         document.getElementById("regisButton").addEventListener("click", function () {
-         const token = btoa(`_token=NONE&growId=&password=`);
-
+            const token = btoa(`_token=NONE&growId=&password=`);
             window.location.href = "/player/growid/login/validate?data=" + encodeURIComponent(token);
-    });
+        });
 
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
-
             const token = btoa(`_token=NONE&growId=${growId.value}&password=${password.value}`);
-
             window.location.href = "/player/growid/login/validate?data=" + encodeURIComponent(token);
         });
     </script>
